@@ -36,6 +36,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -63,6 +64,13 @@ public class MainActivity extends AppCompatActivity {
     // File
     private File currentFile;
 
+    // Hours
+    Date startDate;
+    Date endDate;
+
+    // Location Table
+    private ArrayList locationTbl = new ArrayList<Location>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,41 +88,74 @@ public class MainActivity extends AppCompatActivity {
             {
                 if (gpsStart) // the gps is tracking, so now stop the tracking
                 {
-                    gpsStart =! gpsStart;
-                    button.setText("START");
+                    gpsStart =! gpsStart; // change the boolean
+                    button.setText("START"); // set the button to START now
+
+                    // save the end time
+                    endDate = new Date();
+                    String curTime = endDate.getHours() + ":" + endDate.getMinutes() + ":" + endDate.getSeconds();
+                    System.out.println("L'HEURE END : "+curTime);
+
+                    // the time
+                    long time = Time()[4];
+                    System.out.println("TIME = "+time);
+
+                    // the distance
+                    double d = Distance();
+                    System.out.println("DISTANCE = "+d);
+
+                    // the speed
+                    double speed = d/time;
+                    System.out.println("SPEED = "+speed);
+
                     // go to the reportActivity
                     Intent reportActivity = new Intent(MainActivity.this,ReportActivity.class);
+
+                    // push the data
+                    reportActivity.putExtra("timeDay",Time()[0]);
+                    reportActivity.putExtra("timeHour",Time()[1]);
+                    reportActivity.putExtra("timeMinute",Time()[2]);
+                    reportActivity.putExtra("timeSecond",Time()[3]);
+                    reportActivity.putExtra("distance",d);
+                    reportActivity.putExtra("speed",speed);
 
                     // start the activity
                     startActivity(reportActivity);
                 }
                 else // begin the recording of the gps
                 {
-                    gpsStart =! gpsStart;
-                    button.setText("END");
-                    createGPXFile();
-                    createLocationListener();
+                    gpsStart =! gpsStart; // change the boolean
+                    button.setText("END"); // set the button to END now
+                    createGPXFile(); // create the gpx file
+                    createLocationListener(); // save the location each 5s
+
+                    // save the start time
+                    startDate = new Date();
+                    String curTime = startDate.getHours() + ":" + startDate.getMinutes() + ":" + startDate.getSeconds();
+                    Log.d("Debug","L'HEURE START : "+curTime);
                 }
             }
         });
-
 
     } // end onCreate method
 
 
     @Override
     protected void onStart(){
-        super.onStart();
-    } // end onStart
+        super.onStart(); } // end onStart
 
     @Override
     protected void onStop() {
         super.onStop();
+        double a = Distance();
+        Log.d("Debug","LE TABLEAU LOCATION EST : "+locationTbl);
+        Log.d("Debug","LA DISTANCE EST : "+a);
+
         locMan = null;
     } // end onStop
 
 
-    // return the latitude and the longitude
+    // create the location
     private void createLocationListener() {
 
         try{
@@ -125,6 +166,14 @@ public class MainActivity extends AppCompatActivity {
                     double lat= location.getLatitude();
                     double lon= location.getLongitude();
 
+                    // create the Point
+                    Location Point =new Location("Point");
+                    Point.setLongitude(lon);
+                    Point.setLatitude(lat);
+                    locationTbl.add(Point); // add the Point to my List
+
+
+                    // write in my gpx file
                     String segments = "";
                     SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault());
                     segments += "<trkpt lat=\"" + lat + "\" lon=\"" + lon + "\"><time>" + df.format(new Date()) + "</time></trkpt>\n";
@@ -149,9 +198,7 @@ public class MainActivity extends AppCompatActivity {
         catch(SecurityException sc){
             sc.printStackTrace();
         }
-
-
-    }
+    } // end createLocationListener()
 
 
     // create the gpx file
@@ -180,7 +227,61 @@ public class MainActivity extends AppCompatActivity {
         }
 
         currentFile = MyExternalFile;
-    }
+    } // end createGPXFile()
+
+    // calculate the total distance between Locations
+    private double Distance(){
+        int size = locationTbl.size(); // number of locations
+        double dist = 0; // the counter of distance
+        for (int i = 0; i<size-1;i++) // calculate the distance between each locations
+        {
+            float[] results = new float[1];
+            Location startLocation = (Location) locationTbl.get(i); // location start
+            Location endLocation = (Location) locationTbl.get(i+1); // location end
+
+            // calculate the distance
+            Location.distanceBetween(startLocation.getLatitude(), startLocation.getLongitude(), endLocation.getLatitude(), endLocation.getLongitude(), results);
+            dist+=results[0]; // add to the distance count
+        }
+        return dist;
+    } // end Distance()
+
+    // calculate the difference of time
+    private long[] Time(){
+        //milliseconds
+        long different = endDate.getTime() - startDate.getTime();
+        long[] diffDate = new long[5]; // table to save my data
+
+        // time in milli
+        long secondsInMilli = 1000;
+        long minutesInMilli = secondsInMilli * 60;
+        long hoursInMilli = minutesInMilli * 60;
+        long daysInMilli = hoursInMilli * 24;
+
+        long elapsedDays = different / daysInMilli; // calculate the elapsedDay
+        different = different % daysInMilli;
+
+        long elapsedHours = different / hoursInMilli; // calculate the elapsedHours
+        different = different % hoursInMilli;
+
+        long elapsedMinutes = different / minutesInMilli; // calculate the elapsedMinutes
+        different = different % minutesInMilli;
+
+        long elapsedSeconds = different / secondsInMilli; // calculate the elapsedSeconds
+
+        System.out.printf( "%d days, %d hours, %d minutes, %d seconds%n", elapsedDays, elapsedHours, elapsedMinutes, elapsedSeconds);
+
+        diffDate[0] = elapsedDays; // number of date
+        diffDate[1] = elapsedHours; // number of hours
+        diffDate[2] = elapsedMinutes; // number of minutes
+        diffDate[3] = elapsedSeconds; // number of seconds
+        diffDate[4] = different; // number of miliseconds
+
+        System.out.println("LA DATE DIFF EST : "+diffDate[0]+" "+diffDate[1]+" "+diffDate[2]+" "+diffDate[3]+" "+diffDate[4]);
+        return diffDate;
+    } // end Time()
+
+
 
     // decode the GPX file
     private List<Location> decodeGPX(File file)

@@ -20,50 +20,89 @@
         ></TextView>
 
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/totaltime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:text="TOTAL TIME :"
+        android:textColor="@color/white"
+        android:layout_marginTop="20dp"
+        android:layout_gravity="center"
+        android:textSize="20dp"
+        />
 
-        <TextView
-            android:id="@+id/lat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Latitude: "
-            android:textColor="@color/white"
-            />
-
-        <TextView
-            android:id="@+id/value_lat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="value lat"
-            android:textColor="@color/white"
-            />
-
-    </LinearLayout>
-
-
-    <LinearLayout
+    <TextView
+        android:id="@+id/totaltimevalue"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:text="value of total time"
+        android:textColor="@color/white"
+        android:layout_gravity="center"
+        android:textSize="15dp"
+        />
 
-        <TextView
-            android:id="@+id/lon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Latitude: "
-            android:textColor="@color/white"
-            />
+    <TextView
+        android:id="@+id/totaldistance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TOTAL DISTANCE :"
+        android:textColor="@color/white"
+        android:layout_marginTop="20dp"
+        android:layout_gravity="center"
+        android:textSize="20dp"
+        />
 
-        <TextView
-            android:id="@+id/value_lon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="value lon"
-            android:textColor="@color/white"
-            />
+    <TextView
+        android:id="@+id/totaldistancevalue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="value of total distance"
+        android:textColor="@color/white"
+        android:layout_gravity="center"
+        android:textSize="15dp"
+        />
 
-    </LinearLayout>
+    <TextView
+        android:id="@+id/averagespeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AVERAGE SPEED :"
+        android:textColor="@color/white"
+        android:layout_marginTop="20dp"
+        android:layout_gravity="center"
+        android:textSize="20dp"
+        />
+
+    <TextView
+        android:id="@+id/averagespeedvalue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="value of average speed"
+        android:textColor="@color/white"
+        android:layout_gravity="center"
+        android:textSize="15dp"
+        />
+
+    <TextView
+        android:id="@+id/minmaxaltitude"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="MIN/MAX ALTITUDE:"
+        android:textColor="@color/white"
+        android:layout_marginTop="20dp"
+        android:layout_gravity="center"
+        android:textSize="20dp"
+        />
+
+    <TextView
+        android:id="@+id/minmaxaltitudevalue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="minimum and maximum altitude"
+        android:textColor="@color/white"
+        android:layout_gravity="center"
+        android:textSize="15dp"
+        />
+
+
 </LinearLayout>
