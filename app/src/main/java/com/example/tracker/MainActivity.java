@@ -69,7 +69,17 @@ public class MainActivity extends AppCompatActivity {
     Date endDate;
 
     // Location Table
-    private ArrayList locationTbl = new ArrayList<Location>();
+    public static ArrayList locationTbl = new ArrayList<Location>();
+
+    // Location Speed and Distance
+    public static ArrayList locationDate = new ArrayList<Date>();
+    public static ArrayList locationTime = new ArrayList<Double>();
+    public static ArrayList locationDist = new ArrayList<Double>();
+    public static ArrayList<Float> locationSpeed = new ArrayList<>();
+
+    //Altitude max and min
+    double minAlt;
+    double maxAlt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Location
         locMan = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
 
         // click on the button
         this.button = findViewById(R.id.button);
@@ -97,27 +108,29 @@ public class MainActivity extends AppCompatActivity {
                     System.out.println("L'HEURE END : "+curTime);
 
                     // the time
-                    long time = Time()[4];
-                    System.out.println("TIME = "+time);
+                    double time = Time(startDate,endDate)[3];
 
                     // the distance
                     double d = Distance();
-                    System.out.println("DISTANCE = "+d);
 
                     // the speed
                     double speed = d/time;
-                    System.out.println("SPEED = "+speed);
+
+                    // the min/max altitude
+                    MinMaxAlt();
 
                     // go to the reportActivity
                     Intent reportActivity = new Intent(MainActivity.this,ReportActivity.class);
 
                     // push the data
-                    reportActivity.putExtra("timeDay",Time()[0]);
-                    reportActivity.putExtra("timeHour",Time()[1]);
-                    reportActivity.putExtra("timeMinute",Time()[2]);
-                    reportActivity.putExtra("timeSecond",Time()[3]);
+                    reportActivity.putExtra("timeDay",Time(startDate,endDate)[0]);
+                    reportActivity.putExtra("timeHour",Time(startDate,endDate)[1]);
+                    reportActivity.putExtra("timeMinute",Time(startDate,endDate)[2]);
+                    reportActivity.putExtra("timeSecond",Time(startDate,endDate)[3]);
                     reportActivity.putExtra("distance",d);
                     reportActivity.putExtra("speed",speed);
+                    reportActivity.putExtra("minalt",minAlt);
+                    reportActivity.putExtra("maxalt",maxAlt);
 
                     // start the activity
                     startActivity(reportActivity);
@@ -147,10 +160,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        double a = Distance();
-        Log.d("Debug","LE TABLEAU LOCATION EST : "+locationTbl);
-        Log.d("Debug","LA DISTANCE EST : "+a);
-
         locMan = null;
     } // end onStop
 
@@ -162,16 +171,67 @@ public class MainActivity extends AppCompatActivity {
             locMan.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5, new LocationListener() {
                 @Override
                 public void onLocationChanged(@NonNull Location location) { // the location is changed
+
                     //my value of lat and lon
                     double lat= location.getLatitude();
                     double lon= location.getLongitude();
+                    double alt= location.getAltitude();
 
                     // create the Point
                     Location Point =new Location("Point");
                     Point.setLongitude(lon);
                     Point.setLatitude(lat);
+                    Point.setAltitude(alt);
                     locationTbl.add(Point); // add the Point to my List
 
+
+                    // for the time (get the time difference between each point)
+                    Date currentDate;
+                    if (locationDate.size()==0) // the first localisation
+                    {
+                        // save the time in the table
+                        currentDate = new Date();
+                        locationDate.add(currentDate);
+                        locationTime.add(0);
+                    }
+
+                    else
+                    {
+                        currentDate = new Date();
+                        // get the difference of the two time in seconds
+                        double secondsdiff = Time((Date) locationDate.get(locationDate.size() - 1),currentDate)[3];
+                        locationDate.add(currentDate);
+                        locationTime.add(secondsdiff);
+                    }
+
+                    Log.d("Debug","LE TIME DANS LOCATION "+locationTime);
+
+                    // for the distance
+                    if (locationDist.size()==0)
+                    {
+                        locationDist.add(0);
+                    }
+
+                    else
+                    {
+                        DistanceTbl((Location) locationTbl.get(locationTbl.size()-2),Point); // for the distance
+                    }
+
+
+                    Log.d("Debug","LA DISTANCE DANS LOCATION "+locationDist);
+
+                    // for the speed
+                    if (locationSpeed.size() == 0)
+                    {
+                        locationSpeed.add((float)0);
+                    }
+
+                    else
+                    {
+                        Speed();
+                    }
+
+                    Log.d("Debug","LE SPEED DANS LOCATION "+locationSpeed);
 
                     // write in my gpx file
                     String segments = "";
@@ -246,8 +306,18 @@ public class MainActivity extends AppCompatActivity {
         return dist;
     } // end Distance()
 
+    // calculate the total distance between each Points
+    private void DistanceTbl(Location A, Location B){
+        float[] results = new float[1];
+
+        // calculate the distance
+        Location.distanceBetween(A.getLatitude(), A.getLongitude(), B.getLatitude(), B.getLongitude(), results);
+        locationDist.add(results[0]); // add to the distance count
+
+    } // end Distance()
+
     // calculate the difference of time
-    private long[] Time(){
+    private long[] Time(Date startDate, Date endDate){
         //milliseconds
         long different = endDate.getTime() - startDate.getTime();
         long[] diffDate = new long[5]; // table to save my data
@@ -269,8 +339,6 @@ public class MainActivity extends AppCompatActivity {
 
         long elapsedSeconds = different / secondsInMilli; // calculate the elapsedSeconds
 
-        System.out.printf( "%d days, %d hours, %d minutes, %d seconds%n", elapsedDays, elapsedHours, elapsedMinutes, elapsedSeconds);
-
         diffDate[0] = elapsedDays; // number of date
         diffDate[1] = elapsedHours; // number of hours
         diffDate[2] = elapsedMinutes; // number of minutes
@@ -282,14 +350,26 @@ public class MainActivity extends AppCompatActivity {
     } // end Time()
 
 
+    private void Speed(){
+        float d = (float) locationDist.get(locationDist.size()-1);
+        double t = (double) locationTime.get(locationTime.size()-1);
+        double s = (double) ((d/t)*3.6); // convert to km/h
+        locationSpeed.add((float)s);
 
-    // decode the GPX file
-    private List<Location> decodeGPX(File file)
-    {
-        //todo : decode the file
-        List<Location> list = new ArrayList<Location>();
+    }
 
-        return list;
-
+    private void MinMaxAlt(){
+        int size = locationTbl.size();
+        Location Loc = (Location) locationTbl.get(0);
+        double max = Loc.getAltitude();
+        double min = max;
+        for (int i = 1; i < size;i++){
+            Location currentLoc = (Location) locationTbl.get(i);
+            double current = currentLoc.getAltitude();
+            if (current < min) min = current;
+            if (current > max) max = current;
+        }
+        minAlt = min;
+        maxAlt = max;
     }
 }
